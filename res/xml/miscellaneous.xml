@@ -16,6 +16,13 @@
     xmlns:settings="http://schemas.android.com/apk/res/com.android.settings"
     android:title="@string/miscellaneous_title" >
 
+    <com.awaken.support.preferences.SystemSettingMasterSwitchPreference
+        android:key="screen_state_toggles_enable_key"
+        android:fragment="com.awaken.settings.ScreenStateToggles"
+        android:title="@string/screen_state_toggles_title"
+        android:summary="@string/screen_state_toggles_summary"
+        android:defaultValue="false" />
+
     <com.awaken.support.preferences.SecureSettingSwitchPreference
         android:key="allow_signature_fake"
         android:title="@string/allow_signature_fake"
