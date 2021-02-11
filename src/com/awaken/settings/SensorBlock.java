@@ -70,8 +70,6 @@ public class SensorBlock extends SettingsPreferenceFragment
         // Get launch-able applications
         addPreferencesFromResource(R.xml.sensor_block_settings);
 
-        mFooterPreferenceMixin.createFooterPreference().setTitle(R.string.add_sensor_block_package_summary);
-
         final PreferenceScreen prefScreen = getPreferenceScreen();
         
         mPackageManager = getPackageManager();
