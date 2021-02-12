@@ -23,6 +23,7 @@ import android.content.pm.ResolveInfo;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.UserHandle;
 import android.provider.SearchIndexableResource;
 import android.provider.Settings;
@@ -41,6 +42,8 @@ import com.android.settingslib.search.SearchIndexable;
 
 import com.android.internal.logging.nano.MetricsProto;
 
+import com.awaken.support.preferences.SystemSettingMasterSwitchPreference;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -50,8 +53,12 @@ public class Statusbar extends SettingsPreferenceFragment implements
     Preference.OnPreferenceChangeListener {
 
     private static final String KEY_USE_OLD_MOBILETYPE = "use_old_mobiletype";
+    private static final String BATTERY_BAR = "statusbar_battery_bar";
 
     private SwitchPreference mUseOldMobileType;
+    private SystemSettingMasterSwitchPreference mBatteryBar;
+    private boolean mIsBarSwitchingMode = false;
+    private Handler mHandler;
 
     @Override
     public void onCreate(Bundle icicle) {
@@ -61,10 +68,21 @@ public class Statusbar extends SettingsPreferenceFragment implements
 
         ContentResolver resolver = getActivity().getContentResolver();
 
+        mHandler = new Handler();
+
         mUseOldMobileType = (SwitchPreference) findPreference(KEY_USE_OLD_MOBILETYPE);
         mUseOldMobileType.setChecked((Settings.System.getInt(resolver,
                 Settings.System.USE_OLD_MOBILETYPE, 0) == 1));
         mUseOldMobileType.setOnPreferenceChangeListener(this);
+
+        updateMasterPrefs();
+    }
+
+    private void updateMasterPrefs() {
+        mBatteryBar = (SystemSettingMasterSwitchPreference) findPreference(BATTERY_BAR);
+        mBatteryBar.setChecked((Settings.System.getInt(getActivity().getContentResolver(),
+                Settings.System.STATUSBAR_BATTERY_BAR, 0) == 1));
+        mBatteryBar.setOnPreferenceChangeListener(this);
     }
 
     @Override
@@ -75,8 +93,36 @@ public class Statusbar extends SettingsPreferenceFragment implements
             Settings.System.putInt(getActivity().getContentResolver(),
                     Settings.System.USE_OLD_MOBILETYPE, value ? 1 : 0);
             return true;
-		}
+	} else if (preference == mBatteryBar) {
+            if (mIsBarSwitchingMode) {
+                return false;
+            }
+            mIsBarSwitchingMode = true;
+            boolean showing = (Boolean) newValue;
+            Settings.System.putIntForUser(getActivity().getContentResolver(), Settings.System.STATUSBAR_BATTERY_BAR,
+                    showing ? 1 : 0, UserHandle.USER_CURRENT);
+            mBatteryBar.setChecked(showing);
+            mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mIsBarSwitchingMode = false;
+                }
+            }, 1500);
+            return true;
+        }
         return false;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateMasterPrefs();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        updateMasterPrefs();
     }
 
     @Override
